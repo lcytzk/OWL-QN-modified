@@ -173,7 +173,7 @@ void OptimizerState::GetNextPoint(double alpha) {
 	}
 }
 
-// Eval grad, get lossSum(include l1 and l2 if params are not zero).
+// Eval grad, get lossSum(include l1 and l2).
 double OptimizerState::EvalL1() {
     // Eval new grad, then return lossSum.
 	double val = func.Eval(newX, newGrad);
@@ -294,7 +294,7 @@ void OWLQN::Minimize(DifferentiableFunction& function, const DblVec& initial, Db
         // 1. Get pseudo-gradient 2. Two-loop for Hassien 3. Change sign. So we get direction finally.
 		state.UpdateDir();
         end = clock();
-        printf("updateDir used: %f", (end - start) / (double) CLOCKS_PER_SEC);
+        printf("updateDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
         start = clock();
         // Line search to get a proper step size(alpha).
 		state.BackTrackingLineSearch();

@@ -259,17 +259,20 @@ double LogisticRegressionObjective::Eval(const DblVec& input, DblVec& gradient) 
 		double score = problem.ScoreOf(i, input);
 
 		double insLoss, insProb;
-		if (score < -30) {
-			insLoss = -score;
-			insProb = 0;
-		} else if (score > 30) {
-			insLoss = 0;
-			insProb = 1;
-		} else {
-			double temp = 1.0 + exp(-score);
-			insLoss = log(temp);
-			insProb = 1.0/temp;
-		}
+	    double temp = 1.0 + exp(-score);
+		insLoss = log(temp);
+		insProb = 1.0/temp;
+		//if (score < -30) {
+		//	insLoss = -score;
+		//	insProb = 0;
+		//} else if (score > 30) {
+		//	insLoss = 0;
+		//	insProb = 1;
+		//} else {
+		//	double temp = 1.0 + exp(-score);
+		//	insLoss = log(temp);
+		//	insProb = 1.0/temp;
+		//}
 		loss += insLoss;
 		problem.AddMultTo(i, 1.0 - insProb, gradient);
 	}
