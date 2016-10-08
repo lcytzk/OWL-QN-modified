@@ -1,6 +1,8 @@
 #include <iostream>
 #include <deque>
 #include <fstream>
+#include <string.h>
+#include <cstdlib>
 
 #include "OWLQN.h"
 #include "leastSquares.h"
@@ -107,7 +109,8 @@ int main(int argc, char* argv[]) {
 		obj = new LeastSquaresObjective(*prob, l2weight);
 		size = prob->NumFeats(); 
 	} else {
-		LogisticRegressionProblem *prob = new LogisticRegressionProblem(feature_file, label_file);
+		LogisticRegressionProblem *prob = new LogisticRegressionProblem(feature_file);
+		//LogisticRegressionProblem *prob = new LogisticRegressionProblem(feature_file, label_file);
 		obj = new LogisticRegressionObjective(*prob, l2weight);
 		size = prob->NumFeats(); 
 	}

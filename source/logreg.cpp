@@ -2,13 +2,72 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cstdlib>
+#include <stdint.h>
 
 using namespace std;
+
+int INDEX_SIZE = 1 << 18;
 
 void skipEmptyAndComment(ifstream& file, string& s) {
 	do {
 		getline(file, s);
 	} while (s.size() == 0 || s[0] == '%');
+}
+
+void splitStringAndHash(string s, const char delimiter, vector<size_t>& x, double& y) {
+    const char* c = s.c_str();
+    uint64_t hash = 17;
+    uint64_t hash2 = 17;
+    bool first = true;
+    bool group = false;
+    
+    y = (atoi(s.substr(0, 2).c_str()) == 1) ? 1 : -1;
+
+    while(*c) {
+        while(*c && *c == delimiter) { ++c; }
+        if(!*c) break;
+        if(*c == '|') {
+            group = true;
+            hash = 17;
+        }
+        hash2 = hash;
+        while(*c && *c != delimiter) { 
+            hash2 = hash2 * 31 + *c;
+            ++c;
+        }
+        if(group) { 
+            hash = hash2; 
+            group = false; 
+        } else {
+            if(first) {
+                first = false;
+                continue;
+            }
+            x.push_back(hash2 & (INDEX_SIZE - 1));
+        }
+    }
+} 
+
+LogisticRegressionProblem::LogisticRegressionProblem(const char* filename) {
+    numFeats = INDEX_SIZE;
+	ifstream matfile(filename);
+	if (!matfile.good()) {
+		cerr << "error opening matrix file " << filename << endl;
+		exit(1);
+	}
+    printf("step1\n");
+    string str;
+    vector<size_t> x;
+    double y;
+    while(!matfile.eof()) {
+        getline(matfile, str);
+        if(str.size() < 3) break;
+        x.clear();
+        splitStringAndHash(str, ' ', x, y);
+	    AddInstance(x, y > 0 ? true:false);
+    }
+    printf("finish\n");
 }
 
 LogisticRegressionProblem::LogisticRegressionProblem(const char* matFilename, const char* labelFilename) {
@@ -153,6 +212,16 @@ void LogisticRegressionProblem::AddInstance(const deque<size_t>& inds, const deq
 	for (size_t i=0; i<inds.size(); i++) {
 		indices.push_back(inds[i]);
 		values.push_back(vals[i]);
+	}
+	instance_starts.push_back(indices.size());
+	labels.push_back(label);
+}
+
+void LogisticRegressionProblem::AddInstance(const vector<size_t>& inds, bool label) {
+	for (size_t i=0; i<inds.size(); i++) {
+		indices.push_back(inds[i]);
+		values.push_back(1);
+		//values.push_back(vals[i]);
 	}
 	instance_starts.push_back(indices.size());
 	labels.push_back(label);

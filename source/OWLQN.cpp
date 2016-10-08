@@ -7,6 +7,8 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <cstdlib>
+#include <cstdio>
 
 using namespace std;
 
@@ -105,9 +107,22 @@ void OptimizerState::FixDirSigns() {
 }
 
 void OptimizerState::UpdateDir() {
+    int start, end;
+    start = clock();
+    // Get pseudo-gradient.
 	MakeSteepestDescDir();
+    end = clock();
+    printf("MakeSteepestDescDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    start = clock();
+    // Two-loop.
 	MapDirByInverseHessian();
+    end = clock();
+    printf("MapDirByInverseHessian used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    start = clock();
+    // Decide sign.
 	FixDirSigns();
+    end = clock();
+    printf("FixDirSigns used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 #ifdef _DEBUG
 	TestDirDeriv();
@@ -158,7 +173,9 @@ void OptimizerState::GetNextPoint(double alpha) {
 	}
 }
 
+// Eval grad, get lossSum(include l1 and l2 if params are not zero).
 double OptimizerState::EvalL1() {
+    // Eval new grad, then return lossSum.
 	double val = func.Eval(newX, newGrad);
 	if (l1weight > 0) {
 		for (size_t i=0; i<dim; i++) {
@@ -192,14 +209,23 @@ void OptimizerState::BackTrackingLineSearch() {
 	double oldValue = value;
 
 	while (true) {
+        // Step forward.
+        int start,end;
+        start = clock();
 		GetNextPoint(alpha);
+        end = clock();
+        printf("Get next point used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+        start = clock();
 		value = EvalL1();
+        end = clock();
+        printf("Eval l1 used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 		if (value <= oldValue + c1 * origDirDeriv * alpha) break;
 
 		if (!quiet) cout << "." << flush;
 
 		alpha *= backoff;
+        cout << " # ";
 	}
 
 	if (!quiet) cout << endl;
@@ -263,8 +289,17 @@ void OWLQN::Minimize(DifferentiableFunction& function, const DblVec& initial, Db
 	termCrit->GetValue(state, str);
 
 	while (true) {
+        int start,end;
+        start = clock();
+        // 1. Get pseudo-gradient 2. Two-loop for Hassien 3. Change sign. So we get direction finally.
 		state.UpdateDir();
+        end = clock();
+        printf("updateDir used: %f", (end - start) / (double) CLOCKS_PER_SEC);
+        start = clock();
+        // Line search to get a proper step size(alpha).
 		state.BackTrackingLineSearch();
+        end = clock();
+        printf("line search used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 		ostringstream str;
 		double termCritVal = termCrit->GetValue(state, str);
@@ -275,7 +310,10 @@ void OWLQN::Minimize(DifferentiableFunction& function, const DblVec& initial, Db
 
 		if (termCritVal < tol) break;
 
+        start = clock();
 		state.Shift();
+        end = clock();
+        printf("\nshift used: %f\n\n", (end - start) / (double) CLOCKS_PER_SEC);
 	}
 
 	if (!quiet) cout << endl;

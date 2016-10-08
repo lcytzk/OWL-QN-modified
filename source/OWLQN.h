@@ -3,6 +3,7 @@
 #include <vector>
 #include <deque>
 #include <iostream>
+#include <cstdlib>
 
 typedef std::vector<double> DblVec;
 

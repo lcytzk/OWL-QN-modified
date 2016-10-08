@@ -19,9 +19,11 @@ public:
 		instance_starts.push_back(0);
 	}
 
+	LogisticRegressionProblem(const char* file);
 	LogisticRegressionProblem(const char* mat, const char* labels);
 	void AddInstance(const std::deque<size_t>& inds, const std::deque<float>& vals, bool label);
 	void AddInstance(const std::vector<float>& vals, bool label);
+	void AddInstance(const std::vector<size_t>& vals, bool label);
 	double ScoreOf(size_t i, const std::vector<double>& weights) const;
 
 	bool LabelOf(size_t i) const {
