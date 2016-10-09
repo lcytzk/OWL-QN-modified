@@ -112,17 +112,17 @@ void OptimizerState::UpdateDir() {
     // Get pseudo-gradient.
 	MakeSteepestDescDir();
     end = clock();
-    printf("MakeSteepestDescDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    //printf("MakeSteepestDescDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
     start = clock();
     // Two-loop.
 	MapDirByInverseHessian();
     end = clock();
-    printf("MapDirByInverseHessian used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    //printf("MapDirByInverseHessian used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
     start = clock();
     // Decide sign.
 	FixDirSigns();
     end = clock();
-    printf("FixDirSigns used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    //printf("FixDirSigns used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 #ifdef _DEBUG
 	TestDirDeriv();
@@ -176,13 +176,18 @@ void OptimizerState::GetNextPoint(double alpha) {
 // Eval grad, get lossSum(include l1 and l2).
 double OptimizerState::EvalL1() {
     // Eval new grad, then return lossSum.
+    int start = clock();
 	double val = func.Eval(newX, newGrad);
+    int end = clock();
+    //printf("func evla(eval loss and grad) used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+    start = clock();
 	if (l1weight > 0) {
 		for (size_t i=0; i<dim; i++) {
 			val += fabs(newX[i]) * l1weight;
 		}
 	}
-
+    end = clock();
+    //printf("Add l1 used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 	return val;
 }
 
@@ -214,11 +219,11 @@ void OptimizerState::BackTrackingLineSearch() {
         start = clock();
 		GetNextPoint(alpha);
         end = clock();
-        printf("Get next point used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+        //printf("Get next point used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
         start = clock();
 		value = EvalL1();
         end = clock();
-        printf("Eval l1 used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+        //printf("Eval l1 used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 		if (value <= oldValue + c1 * origDirDeriv * alpha) break;
 
@@ -294,12 +299,12 @@ void OWLQN::Minimize(DifferentiableFunction& function, const DblVec& initial, Db
         // 1. Get pseudo-gradient 2. Two-loop for Hassien 3. Change sign. So we get direction finally.
 		state.UpdateDir();
         end = clock();
-        printf("updateDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+        //printf("updateDir used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
         start = clock();
         // Line search to get a proper step size(alpha).
 		state.BackTrackingLineSearch();
         end = clock();
-        printf("line search used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
+        //printf("line search used: %f\n", (end - start) / (double) CLOCKS_PER_SEC);
 
 		ostringstream str;
 		double termCritVal = termCrit->GetValue(state, str);
@@ -313,7 +318,7 @@ void OWLQN::Minimize(DifferentiableFunction& function, const DblVec& initial, Db
         start = clock();
 		state.Shift();
         end = clock();
-        printf("\nshift used: %f\n\n", (end - start) / (double) CLOCKS_PER_SEC);
+        //printf("\nshift used: %f\n\n", (end - start) / (double) CLOCKS_PER_SEC);
 	}
 
 	if (!quiet) cout << endl;
