@@ -4,8 +4,11 @@
 #include <string>
 #include <cstdlib>
 #include <stdint.h>
+#include <unordered_map>
 
 using namespace std;
+
+unordered_map<string, int> fmap;
 
 int INDEX_SIZE = 1 << 18;
 
@@ -15,42 +18,41 @@ void skipEmptyAndComment(ifstream& file, string& s) {
 	} while (s.size() == 0 || s[0] == '%');
 }
 
-void splitStringAndHash(string s, const char delimiter, vector<size_t>& x, double& y) {
-    const char* c = s.c_str();
-    uint64_t hash = 17;
-    uint64_t hash2 = 17;
-    bool first = true;
-    bool group = false;
-    
-    y = (atoi(s.substr(0, 2).c_str()) == 1) ? 1 : -1;
+void splitString(string& s, vector<string>& output, const char delimiter) {
+    size_t start;
+    size_t index = 0;
 
-    while(*c) {
-        while(*c && *c == delimiter) { ++c; }
-        if(!*c) break;
-        if(*c == '|') {
-            group = true;
-            hash = 17;
+    while(index != string::npos) {
+        index = s.find_first_not_of(delimiter, index);
+        if(index == string::npos) break;
+        start = index;
+        index = s.find_first_of(delimiter, index);
+        if(index == string::npos) {
+            output.push_back(s.substr(start, s.size() - start));
+            break;
         }
-        hash2 = hash;
-        while(*c && *c != delimiter) { 
-            hash2 = hash2 * 31 + *c;
-            ++c;
-        }
-        if(group) { 
-            hash = hash2; 
-            group = false; 
+        output.push_back(s.substr(start, index - start));
+    }   
+}
+
+void splitStringAndHash(string& s, const char delimiter, vector<size_t>& x, double& y) {
+    vector<string> out;
+    splitString(s, out, delimiter);
+    y = (atoi(out[0].c_str()) == 1) ? 1 : -1;
+    for(int i = 0; i < out.size(); ++i) {
+        int index;
+        unordered_map<string, int>::iterator it = fmap.find(out[i]);
+        if(it == fmap.end()) {
+            index = fmap.size();
+            fmap[out[i]] = index;
         } else {
-            if(first) {
-                first = false;
-                continue;
-            }
-            x.push_back(hash2 & (INDEX_SIZE - 1));
+            index = it->second;
         }
+        x.push_back(index);
     }
 } 
 
 LogisticRegressionProblem::LogisticRegressionProblem(const char* filename) {
-    numFeats = INDEX_SIZE;
 	ifstream matfile(filename);
 	if (!matfile.good()) {
 		cerr << "error opening matrix file " << filename << endl;
@@ -67,6 +69,7 @@ LogisticRegressionProblem::LogisticRegressionProblem(const char* filename) {
         splitStringAndHash(str, ' ', x, y);
 	    AddInstance(x, y > 0 ? true:false);
     }
+    numFeats = fmap.size();
     printf("instance end end %d \n", instance_starts[labels.size() - 1]);
     printf("finish\n");
 }
